@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán Học Phí QR</title>
+    <link rel="shortcut icon" href="./logo1.png" type="image/x-icon">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a56db;
+            --primary-light: #e8effc;
+            --primary-dark: #1e429f;
+            --border: #d1d5db;
+            --text: #374151;
+            --text-light: #6b7280;
+            --white: #ffffff;
+            --bg: #f3f4f6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+        }
+        .header {
+            background: var(--primary);
+            color: var(--white);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .header img {
+            height: 40px;
+            width: auto;
+        }
+        .footer {
+            background: var(--primary);
+            color: var(--white);
+            padding: 10px 30px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        .main-container {
+            display: flex;
+            height: calc(100vh - 100px);
+        }
+        .left-panel {
+            width: 320px;
+            min-width: 320px;
+            padding: 15px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            background: var(--white);
+        }
+        .right-panel {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: var(--bg);
+            display: flex;
+            gap: 15px;
+        }
+        .right-panel-left {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .right-panel-left .card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .right-panel-left #studentList {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .right-panel-right {
+            width: 420px;
+            min-width: 420px;
+            overflow-y: auto;
+        }
+        .card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .upload-section {
+            border: 2px dashed var(--primary);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--primary-light);
+        }
+        .upload-section:hover { background: #dbeafe; }
+        .upload-section h3 { color: var(--primary); margin-top: 4px; font-size: 0.85rem; }
+        .upload-section p { color: var(--text-light); font-size: 0.7rem; margin-top: 3px; }
+        #fileInput { display: none; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+        }
+        .search-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .search-box input { flex: 1; }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: var(--white); }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-success { background: #059669; color: var(--white); }
+        .btn-success:hover { background: #047857; }
+        .btn-sm { padding: 5px 10px; font-size: 0.75rem; }
+        .student-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        .student-table thead {
+            position: sticky;
+            top: 0;
+            background: var(--primary);
+            color: white;
+        }
+        .student-table th, .student-table td {
+            padding: 8px 10px;
+            text-align: left;
+        }
+        .student-table tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .student-table tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+        .student-table tbody tr:hover {
+            background: var(--primary-light);
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="./logo.png" alt="Logo" style="height: 40px; width: auto;">
+        <h1>Hệ thống phát hành phiếu thông báo học phí kèm mã QR</h1>
+    </div>
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="card">
+                <div class="upload-section" onclick="document.getElementById('fileInput').click()">
+                    <div style="font-size: 1.2rem;">📁</div>
+                    <h3>Chọn file Excel</h3>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(event)">
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">Cấu hình ngân hàng</div>
+                <div class="form-group">
+                    <label>Ngân hàng:</label>
+                    <select id="bankId">
+                        <option value="">-- Đang tải danh sách ngân hàng... --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Số tài khoản:</label>
+                    <input type="text" id="accountNo" placeholder="Nhập số tài khoản">
+                    <span id="accountLookupStatus" style="font-size: 0.75rem; margin-top: 3px; display: block;"></span>
+                </div>
+                <div class="form-group">
+                    <label>Tên tài khoản:</label>
+                    <input type="text" id="accountName" placeholder="Tự động điền hoặc nhập tay">
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">Thông tin học kỳ</div>
+                <div class="form-group">
+                    <label>Học kỳ - Năm học:</label>
+                    <input type="text" id="hocKyNamHoc" value="Học kỳ 2 - Năm học 2025 - 2026" placeholder="VD: Học kỳ 2 - Năm học 2025 - 2026">
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">Thông tin ký tên</div>
+                <div class="form-group">
+                    <label>Tiêu đề cột 1:</label>
+                    <input type="text" id="tieuDeCot1" value="Người đăng ký" placeholder="Người đăng ký">
+                </div>
+                <div class="form-group">
+                    <label>Tiêu đề cột 2:</label>
+                    <input type="text" id="tieuDeCot2" value="Phòng ĐTKT&BĐCL" placeholder="Phòng ĐTKT&BĐCL">
+                </div>
+                <div class="form-group">
+                    <label>Tiêu đề cột 3:</label>
+                    <input type="text" id="tieuDeCot3" value="Người lập biểu" placeholder="Người lập biểu">
+                </div>
+                <div class="form-group">
+                    <label>Tên người ký cột 2:</label>
+                    <input type="text" id="nguoiKyCot2" value="Lê Ngọc Nữ" placeholder="Lê Ngọc Nữ">
+                </div>
+                <div class="form-group">
+                    <label>Tên người ký cột 3:</label>
+                    <input type="text" id="nguoiKyCot3" value="Nguyễn Chí Thanh" placeholder="Nguyễn Chí Thanh">
+                </div>
+            </div>
+        </div>
+        <div class="right-panel">
+            <div class="right-panel-left">
+                <div class="card">
+                    <div class="card-title">Tìm kiếm sinh viên</div>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Nhập mã SV hoặc tên sinh viên...">
+                        <button class="btn btn-primary" onclick="searchStudent()">Tìm kiếm</button>
+                        <button class="btn btn-success" onclick="exportAllPDF()" id="btnExportAll" style="display: none;">Xuất PDF hàng loạt</button>
+                    </div>
+                    <div id="studentList"></div>
+                    <div id="exportProgress" style="display: none; margin-top: 10px; padding: 10px; background: #e8effc; border-radius: 6px;">
+                        <p style="margin-bottom: 5px; font-weight: 500;">Đang xuất PDF...</p>
+                        <div style="background: #d1d5db; border-radius: 4px; height: 8px; overflow: hidden;">
+                            <div id="progressBar" style="background: #1a56db; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <p id="progressText" style="font-size: 0.8rem; color: #6b7280; margin-top: 5px;">0 / 0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="right-panel-right">
+                <div id="resultSection" style="display: block;"></div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+    <div class="footer">
+        © 2025 Phân hiệu Trường Đại học Bình Dương tại Cà Mau. All rights reserved.
+    </div>
+</body>
+</html>
