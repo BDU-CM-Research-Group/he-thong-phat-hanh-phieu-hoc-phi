@@ -66,17 +66,18 @@ const PDFTemplate = {
         const sumBg = 'background-color: #dbeafe;';
 
 
-        const cellStyle = `padding: 1px 2px; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
-        const cellStyleLeft = `padding: 1px 2px; border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
-        const cellStyleRight = `padding: 1px 2px; border-bottom: ${borderStyle};`;
+        const cellPadding = 'padding: 5px 4px; vertical-align: middle;';
+        const cellStyle = `${cellPadding} border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
+        const cellStyleLeft = `${cellPadding} border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
+        const cellStyleRight = `${cellPadding} border-bottom: ${borderStyle};`;
 
-        const thStyle = `padding: 1px 2px; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
-        const thStyleLeft = `padding: 1px 2px; border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
-        const thStyleRight = `padding: 1px 2px; border-bottom: ${borderStyle};`;
+        const thStyle = `${cellPadding} border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
+        const thStyleLeft = `${cellPadding} border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
+        const thStyleRight = `${cellPadding} border-bottom: ${borderStyle};`;
 
-        const thStyleTop = `padding: 1px 2px; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
-        const thStyleTopLeft = `padding: 1px 2px; border-top: ${borderStyle}; border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
-        const thStyleTopRight = `padding: 1px 2px; border-top: ${borderStyle}; border-bottom: ${borderStyle};`;
+        const thStyleTop = `${cellPadding} border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
+        const thStyleTopLeft = `${cellPadding} border-top: ${borderStyle}; border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
+        const thStyleTopRight = `${cellPadding} border-top: ${borderStyle}; border-bottom: ${borderStyle};`;
 
 
         let html = `
@@ -144,7 +145,10 @@ const PDFTemplate = {
 
     _renderFooter(dateStr, tenDayDu) {
         const today = new Date();
-        const printDate = `Ngày in: ${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const printDate = `Ngày in: ${dd}/${mm}/${yyyy}`;
 
         const tieuDeCot1 = DOM.getValue('tieuDeCot1') || 'Người đăng ký';
         const tieuDeCot2 = DOM.getValue('tieuDeCot2') || 'Phòng ĐTKT&BĐCL';
@@ -153,8 +157,12 @@ const PDFTemplate = {
         const nguoiKyCot3 = DOM.getValue('nguoiKyCot3') || 'Nguyễn Chí Thanh';
         return `
         <div style="position: relative;">
-            <p style="text-align: right; margin: 0 25px; font-size: 10px; font-style: italic;">${dateStr}</p>
             <table style="width: 100%; font-size: 10px; margin-top: 0;">
+                <tr>
+                     <td style="width: 33%;"></td>
+                     <td style="width: 33%;"></td>
+                     <td style="width: 33%; text-align: center; font-style: italic; padding-bottom: 2px;">${dateStr}</td>
+                </tr>
                 <tr>
                     <td style="width: 33%; text-align: center;"><p style="font-weight: bold; margin: 0; font-size: 10px;">${tieuDeCot1}</p></td>
                     <td style="width: 33%; text-align: center;"><p style="font-weight: bold; margin: 0; font-size: 10px;">${tieuDeCot2}</p></td>
@@ -166,7 +174,7 @@ const PDFTemplate = {
                     <td style="text-align: center; padding-top: 60px; font-size: 10px;"><b>${nguoiKyCot3}</b></td>
                 </tr>
             </table>
-            <p style="text-align: left; margin-top: 5px; margin-bottom: 0; font-size: 9px; color: #666; font-style: italic;">${printDate}</p>
+            <p style="text-align: left; margin-top: 5px; margin-bottom: 0; font-size: 7px; color: #666; font-style: italic;">${printDate}</p>
         </div>`;
     }
 };
@@ -228,7 +236,7 @@ const PDFExporter = {
             const pdf = new jsPDF('l', 'mm', 'a5');
             const stats = { success: 0, error: 0, current: 0 };
             const totalToExport = studentsToExport.length;
-            const BATCH_SIZE = 10; // Xử lý 10 file/lượt
+            const BATCH_SIZE = 5; // Giảm batch size vì tăng độ phân giải
 
             try {
                 // Batch processing optimization
@@ -245,8 +253,8 @@ const PDFExporter = {
 
                             tempContainer.innerHTML = this._generatePDFContent(sv);
 
-                            // Scale 1.5: Good balance between clarity and file size
-                            const canvas = await this._renderCanvas(tempContainer.firstElementChild, true, 1.5);
+                            // Scale 3: High resolution for sharpness (~250kb/page)
+                            const canvas = await this._renderCanvas(tempContainer.firstElementChild, true, 3);
 
                             document.body.removeChild(tempContainer);
                             return { success: true, canvas: canvas, sv: sv };
@@ -264,8 +272,8 @@ const PDFExporter = {
                             // Add new page if not the very first page
                             if (i > 0 || j > 0) pdf.addPage();
 
-                            // Use JPEG quality 0.75 to keep file size < 1MB per page
-                            this._addImageToPDF(pdf, res.canvas, 1.5, 0.75);
+                            // Use JPEG quality 1.0 for max sharpness
+                            this._addImageToPDF(pdf, res.canvas, 3, 1.0);
                             stats.success++;
                         } else {
                             console.error(`Lỗi xuất PDF cho ${res.sv.maSV}:`, res.error);
@@ -423,8 +431,8 @@ const PDFExporter = {
     },
 
     async _renderCanvas(element, isBatch = false, customScale = null) {
-        // Giảm scale cho batch processing để tăng tốc độ
-        const scale = customScale ? customScale : (isBatch ? 1.2 : 2);
+        // Tăng scale để ảnh nét hơn (3-4)
+        const scale = customScale ? customScale : (isBatch ? 3 : 4);
         return await html2canvas(element, {
             scale: scale,
             useCORS: true,
@@ -450,7 +458,7 @@ const PDFExporter = {
         return pdf;
     },
 
-    _addImageToPDF(pdf, canvas, scale, quality = 0.8) {
+    _addImageToPDF(pdf, canvas, scale, quality = 1.0) {
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
         const marginX = 5;
@@ -507,8 +515,8 @@ const PDFExporter = {
 
             tempContainer.innerHTML = this._generatePDFContent(sv);
 
-            // Scale cho batch processing (1.2) hoặc single (2)
-            const scale = isBatch ? 1.2 : 2;
+            // Tăng scale lên 3 (batch) hoặc 4 (single) để đảm bảo độ nét
+            const scale = isBatch ? 3 : 4;
             const canvas = await this._renderCanvas(tempContainer.firstElementChild, isBatch);
 
             // Cleanup temp container ngay sau khi render để giải phóng memory
