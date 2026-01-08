@@ -340,8 +340,10 @@ const QRGenerator = {
         const qrUrl = BankService.generateQRUrl(bankId, accountNo, sv.tongTien, content, accountName);
 
         const html = `
-            <div class="card" id="pdfContent" style="position: relative; max-width: 200mm; margin: 0 auto; border-radius: 0; border: none;">
-                ${PDFTemplate.generate(sv, qrUrl)}
+            <div style="overflow-x: auto; width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;">
+                <div class="card" id="pdfContent" style="position: relative; width: 200mm; margin: 0; border-radius: 0; border: none; transform-origin: top left;">
+                    ${PDFTemplate.generate(sv, qrUrl).replace('margin: 0 auto', 'margin: 0')}
+                </div>
             </div>
             <div style="text-align: center; margin-top: 15px;">
                 <button class="btn btn-primary" onclick="PDFExporter.exportSingle('${maSV}')" style="margin-right: 10px;">
@@ -379,20 +381,25 @@ const PDFTemplate = {
 
         return `
         <div style="font-family: 'Times New Roman', Times, serif; font-size: 11px; color: #000; position: relative; max-width: 200mm; margin: 0 auto;">
-            ${this._renderHeader(qrUrl)}
-            ${this._renderTitle(hocKyNamHoc)}
+            ${this._renderHeader(qrUrl, hocKyNamHoc)}
             ${this._renderStudentInfo(sv)}
             ${this._renderTable(sv, tongMienGiam)}
             ${this._renderFooter(dateStr, sv.tenDayDu)}
         </div>`;
     },
 
-    _renderHeader(qrUrl) {
+    _renderHeader(qrUrl, hocKyNamHoc) {
         return `
         <table style="width: 100%; margin-bottom: 8px;">
             <tr>
-                <td style="width: 90px; vertical-align: top;">
+                <td style="width: 120px; vertical-align: top;">
                     <img src="logo.png" alt="Logo" style="width: 90px; height: 40px;">
+                </td>
+                <td style="text-align: center; vertical-align: middle;">
+                     <h2 style="color: #1a56db; margin: 0 0 4px 0; font-size: 13px; font-weight: bold;">
+                        GIẤY BÁO HỌC PHÍ
+                    </h2>
+                    <p style="margin: 0; font-size: 10px;">${hocKyNamHoc}</p>
                 </td>
                  <td style="text-align: right; vertical-align: top; width: 120px;">
                     <img src="${qrUrl}" alt="QR Code" style="width: 75px; height: 75px;">
@@ -402,13 +409,7 @@ const PDFTemplate = {
         </table>`;
     },
 
-    _renderTitle(hocKyNamHoc) {
-        return `
-        <h2 style="text-align: center; color: #1a56db; margin: -40px 0 4px 0; font-size: 13px; font-weight: bold;">
-            GIẤY BÁO HỌC PHÍ
-        </h2>
-        <p style="text-align: center; margin: 0 0 8px 0; font-size: 10px;">${hocKyNamHoc}</p>`;
-    },
+
 
     _renderStudentInfo(sv) {
         return `
