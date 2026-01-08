@@ -11,10 +11,10 @@ const CONFIG = {
     LOOKUP_DELAY: 800, // ms
     RENDER_DELAY: 800, // ms
     PDF: {
-        FORMAT: 'a4',
-        ORIENTATION: 'l', // portrait
-        SCALE: 2.5,
-        MARGIN: 10
+        FORMAT: 'a5',
+        ORIENTATION: 'l',
+        SCALE: 2.0,
+        MARGIN: 5
     },
     ACADEMIC_YEAR: 'Học kỳ 2 - Năm học 2025 - 2026'
 };
@@ -76,7 +76,7 @@ const BankService = {
         try {
             const response = await fetch(CONFIG.API.VIETQR_BANKS);
             const data = await response.json();
-            
+
             if (data.code === '00' && data.data) {
                 AppState.banksList = data.data;
                 this.renderBankOptions(data.data);
@@ -85,7 +85,7 @@ const BankService = {
         } catch (error) {
             console.error('Lỗi khi tải danh sách ngân hàng:', error);
         }
-        
+
         // Fallback
         AppState.banksList = FALLBACK_BANKS;
         this.renderBankOptions(FALLBACK_BANKS);
@@ -95,14 +95,14 @@ const BankService = {
     renderBankOptions(banks) {
         const bankSelect = DOM.get('bankId');
         bankSelect.innerHTML = '<option value="">-- Chọn ngân hàng --</option>';
-        
+
         banks.forEach(bank => {
             const option = document.createElement('option');
             option.value = bank.bin;
             option.textContent = `${bank.shortName} - ${bank.name}`;
             bankSelect.appendChild(option);
         });
-        
+
         bankSelect.value = CONFIG.DEFAULT_BANK;
     },
 
@@ -115,16 +115,16 @@ const BankService = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bin: bankId, accountNumber: accountNo })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.code === '00' && data.data?.accountName) {
                 return data.data.accountName;
             }
         } catch (error) {
             console.error('Lỗi tra cứu tài khoản:', error);
         }
-        
+
         return null;
     },
 
@@ -144,7 +144,7 @@ const BankService = {
 const FileProcessor = {
     handleFile(file) {
         if (!file) return;
-        
+
         const reader = new FileReader();
         reader.onload = (e) => {
             const data = new Uint8Array(e.target.result);
@@ -159,7 +159,7 @@ const FileProcessor = {
 
     processData(data) {
         AppState.reset();
-        
+
         data.forEach(row => {
             const maSV = row.MaSV;
             if (!maSV) return;
@@ -184,6 +184,7 @@ const FileProcessor = {
             const mienGiam = parseFloat(row.MienGiam) || 0;
             const donGia = parseFloat(row.DonGiaHPCT) || 0;
             const phuThu = parseFloat(row.TienPhuThu) || 0;
+            const ghiChu = row.HeSoHP || '';
 
             AppState.groupedStudents[maSV].monHoc.push({
                 maMH: row.MaMH,
@@ -194,7 +195,8 @@ const FileProcessor = {
                 donGia,
                 mienGiam,
                 phuThu,
-                phaiThu
+                phaiThu,
+                ghiChu
             });
 
             AppState.groupedStudents[maSV].tongTien += phaiThu;
@@ -243,18 +245,18 @@ const UI = {
     showStudentList(students = null) {
         const list = students || AppState.getAllStudents();
         const listDiv = DOM.get('studentList');
-        
+
         let html = `<p style="margin-bottom: 10px; color: #6b7280; font-size: 0.85rem;">
             ${students ? 'Tìm thấy' : 'Tổng số'}: <strong>${list.length}</strong> sinh viên
         </p>`;
-        
+
         html += '<div style="flex: 1; overflow-y: auto; border: 0.2px solid #d1d5db;">';
         html += '<table class="student-table"><thead><tr>';
         html += '<th>Mã SV</th><th>Họ tên</th><th>Lớp</th>';
         html += '<th style="text-align: right;">Tổng tiền</th>';
         html += '<th style="text-align: center;">Thao tác</th>';
         html += '</tr></thead><tbody>';
-        
+
         list.forEach(sv => {
             html += `<tr>
                 <td>${sv.maSV}</td>
@@ -270,13 +272,13 @@ const UI = {
                 </td>
             </tr>`;
         });
-        
+
         html += '</tbody></table></div>';
         listDiv.innerHTML = html;
     },
 
     showNoResults() {
-        DOM.get('studentList').innerHTML = 
+        DOM.get('studentList').innerHTML =
             '<p style="color: #dc2626; text-align: center; padding: 20px;">Không tìm thấy sinh viên nào!</p>';
     },
 
@@ -295,7 +297,7 @@ const UI = {
 const Search = {
     perform() {
         const keyword = DOM.getValue('searchInput').toLowerCase().trim();
-        
+
         if (!keyword) {
             UI.showStudentList();
             return;
@@ -338,7 +340,7 @@ const QRGenerator = {
         const qrUrl = BankService.generateQRUrl(bankId, accountNo, sv.tongTien, content, accountName);
 
         const html = `
-            <div class="card" id="pdfContent" style="position: relative; max-width: 140mm; margin: 0 auto; border-radius: 0; border: none;">
+            <div class="card" id="pdfContent" style="position: relative; max-width: 200mm; margin: 0 auto; border-radius: 0; border: none;">
                 ${PDFTemplate.generate(sv, qrUrl)}
             </div>
             <div style="text-align: center; margin-top: 15px;">
@@ -376,7 +378,7 @@ const PDFTemplate = {
         const hocKyNamHoc = DOM.getValue('hocKyNamHoc') || CONFIG.ACADEMIC_YEAR;
 
         return `
-        <div style="font-family: 'Times New Roman', Times, serif; font-size: 11px; color: #000; position: relative; max-width: 140mm; margin: 0 auto;">
+        <div style="font-family: 'Times New Roman', Times, serif; font-size: 11px; color: #000; position: relative; max-width: 200mm; margin: 0 auto;">
             ${this._renderHeader(qrUrl)}
             ${this._renderTitle(hocKyNamHoc)}
             ${this._renderStudentInfo(sv)}
@@ -413,7 +415,7 @@ const PDFTemplate = {
         <table style="width: 100%; margin-bottom: 6px; margin-top: 5px;">
             <tr>
                 <td style="vertical-align: top;">
-                    <table style="width: 100%; font-size: 9px; margin-top: 2px;">
+                    <table style="width: 100%; font-size: 11px; margin-top: 2px;">
                         <tr>
                             <td style="padding: 1px 0; width: 40%;">Họ và tên: <strong>${sv.tenDayDu}</strong></td>
                             <td style="padding: 1px 0; width: 30%;">MSSV: <strong>${sv.maSV}</strong></td>
@@ -430,38 +432,38 @@ const PDFTemplate = {
     },
 
     _renderTable(sv, tongMienGiam) {
-   
+
         const borderStyle = '1px solid #333';
         const hBg = 'background-color: #dbeafe;';
         const sumBg = 'background-color: #dbeafe;';
-        
-  
-        const cellStyle = `padding: 3px; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
-        const cellStyleLeft = `padding: 3px; border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
-        const cellStyleRight = `padding: 3px; border-bottom: ${borderStyle};`;
-       
+
+
+        const cellStyle = `padding: 4px; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
+        const cellStyleLeft = `padding: 4px; border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
+        const cellStyleRight = `padding: 4px; border-bottom: ${borderStyle};`;
+
         const thStyle = `padding: 4px; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
         const thStyleLeft = `padding: 4px; border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
         const thStyleRight = `padding: 4px; border-bottom: ${borderStyle};`;
-       
+
         const thStyleTop = `padding: 4px; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
         const thStyleTopLeft = `padding: 4px; border-top: ${borderStyle}; border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
         const thStyleTopRight = `padding: 4px; border-top: ${borderStyle}; border-bottom: ${borderStyle};`;
-     
-        
+
+
         let html = `
-        <table style="width: 100%; border-collapse: collapse; border-spacing: 0; font-size: 9px; margin-bottom: 3px;">
+        <table style="width: 100%; border-collapse: collapse; border-spacing: 0; font-size: 11px; margin-bottom: 3px;">
             <thead>
                 <tr style="${hBg}">
                     <th style="${thStyleTopLeft} text-align: center; width: 25px; ${hBg}">STT</th>
                     <th style="${thStyleTop} text-align: center; ${hBg}">Học phần</th>
                     <th style="${thStyleTop} text-align: center; width: 25px; ${hBg}">Nhóm</th>
-                    <th style="${thStyleTop} text-align: center; width: 25px; ${hBg}">Tín chỉ</th>
+                    <th style="${thStyleTop} text-align: center; width: 40px; ${hBg}">Tín chỉ</th>
                     <th style="${thStyleTop} text-align: center; width: 35px; ${hBg}">Đơn giá</th>
-                    <th style="${thStyleTop} text-align: center; width: 35px; ${hBg}">Thành tiền</th>
-                    <th style="${thStyleTop} text-align: center; width: 35px; ${hBg}">Miễn giảm</th>
-                    <th style="${thStyleTop} text-align: center; width: 35px; ${hBg}">Phụ thu</th>
-                    <th style="${thStyleTopRight} text-align: center; width: 55px; border-right: ${borderStyle}; ${hBg}">Phải thu</th>
+                    <th style="${thStyleTop} text-align: center; width: 45px; ${hBg}">Thành tiền</th>
+                    <th style="${thStyleTop} text-align: center; width: 45px; ${hBg}">Miễn giảm</th>
+                    <th style="${thStyleTop} text-align: center; width: 55px; ${hBg}">Phải thu</th>
+                    <th style="${thStyleTopRight} text-align: center; width: 35px; border-right: ${borderStyle}; ${hBg}">Ghi chú</th>
                 </tr>
                 <tr style="font-size: 7px; ${hBg}">
                     <th style="${thStyleLeft} text-align: center; ${hBg}">(A)</th>
@@ -472,7 +474,7 @@ const PDFTemplate = {
                      <th style="${thStyle} text-align: center; ${hBg}">(3)=(1)*(2)</th>
                     <th style="${thStyle} text-align: center; ${hBg}">(4)</th>
                     <th style="${thStyle} text-align: center; ${hBg}">(5)</th>
-                    <th style="${thStyleRight} text-align: center; border-right: ${borderStyle}; ${hBg}; ">(6)=(3)-(4)+(5)</th>
+                    <th style="${thStyleRight} text-align: center; border-right: ${borderStyle}; ${hBg}; ">(6)</th>
                 </tr>
             </thead>
             <tbody>
@@ -490,22 +492,22 @@ const PDFTemplate = {
                 <td style="${cellStyle} text-align: right;">${Utils.formatNumber(mh.donGia)}</td>
                 <td style="${cellStyle} text-align: right;">${Utils.formatNumber(thanhTien)}</td>
                 <td style="${cellStyle} text-align: right;">${Utils.formatNumber(mh.mienGiam)}</td>
-                <td style="${cellStyle} text-align: right;">${Utils.formatNumber(mh.phuThu || 0)}</td>
-                <td style="${cellStyleRight} text-align: right; border-right: ${borderStyle};">${Utils.formatNumber(mh.phaiThu)}</td>
+                <td style="${cellStyle} text-align: right;">${Utils.formatNumber(mh.phaiThu)}</td>
+                <td style="${cellStyleRight} text-align: center; border-right: ${borderStyle};">${mh.ghiChu ? 'HL' : ''}</td>
             </tr>`;
         });
 
         // Tính tổng thành tiền và tổng phụ thu
         const tongThanhTien = sv.monHoc.reduce((sum, mh) => sum + (mh.soTC * mh.donGia), 0);
-        const tongPhuThu = sv.monHoc.reduce((sum, mh) => sum + (mh.phuThu || 0), 0);
+        // Removed tongPhuThu calculation for display purposes, but referencing sv.tongTien which is pre-calculated
 
         html += `
                 <tr style="${sumBg}">
-                    <td colspan="5" style="${cellStyleLeft} padding: 4px; text-align: center; font-weight: bold; ${sumBg}">Tổng cộng:</td>
-                    <td style="${cellStyle} padding: 4px; text-align: right; font-weight: bold; ${sumBg}">${Utils.formatNumber(tongThanhTien)}</td>
-                    <td style="${cellStyle} padding: 4px; text-align: right; font-weight: bold; ${sumBg}">${Utils.formatNumber(tongMienGiam)}</td>
-                    <td style="${cellStyle} padding: 4px; text-align: right; font-weight: bold; ${sumBg}">${Utils.formatNumber(tongPhuThu)}</td>
-                    <td style="${cellStyle} padding: 4px; text-align: right; color: #000000ff; font-weight: bold; border-right: ${borderStyle}; ${sumBg}">${Utils.formatNumber(sv.tongTien)}</td>
+                    <td colspan="5" style="${cellStyleLeft} padding: 6px; text-align: center; font-weight: bold; ${sumBg}">Tổng cộng:</td>
+                    <td style="${cellStyle} padding: 6px; text-align: right; font-weight: bold; ${sumBg}">${Utils.formatNumber(tongThanhTien)}</td>
+                    <td style="${cellStyle} padding: 6px; text-align: right; font-weight: bold; ${sumBg}">${Utils.formatNumber(tongMienGiam)}</td>
+                    <td style="${cellStyle} padding: 6px; text-align: right; font-weight: bold; ${sumBg}">${Utils.formatNumber(sv.tongTien)}</td>
+                    <td style="${cellStyle} padding: 6px; text-align: right; border-right: ${borderStyle}; ${sumBg}"></td>
                 </tr>
             </tbody>
         </table>`;
@@ -514,25 +516,25 @@ const PDFTemplate = {
     },
 
     _renderFooter(dateStr, tenDayDu) {
-        
-       
+
+
         const tieuDeCot1 = DOM.getValue('tieuDeCot1') || 'Người đăng ký';
         const tieuDeCot2 = DOM.getValue('tieuDeCot2') || 'Phòng ĐTKT&BĐCL';
         const tieuDeCot3 = DOM.getValue('tieuDeCot3') || 'Người lập biểu';
         const nguoiKyCot2 = DOM.getValue('nguoiKyCot2') || 'Lê Ngọc Nữ';
         const nguoiKyCot3 = DOM.getValue('nguoiKyCot3') || 'Nguyễn Chí Thanh';
         return `
-        <p style="text-align: right; margin: 4px 5px; font-size: 9px; font-style: italic;">${dateStr}</p>
-        <table style="width: 100%; font-size: 9px; margin-top: 4px;">
+        <p style="text-align: right; margin: 4px 55px; font-size: 11px; font-style: italic;">${dateStr}</p>
+        <table style="width: 100%; font-size: 11px; margin-top: 4px;">
             <tr>
-                <td style="width: 33%; text-align: center;"><p style="font-weight: bold; margin: 0; font-size: 9px;">${tieuDeCot1}</p></td>
-                <td style="width: 33%; text-align: center;"><p style="font-weight: bold; margin: 0; font-size: 9px;">${tieuDeCot2}</p></td>
-                <td style="width: 33%; text-align: center;"><p style="font-weight: bold; margin: 0; font-size: 9px;">${tieuDeCot3}</p></td>
+                <td style="width: 33%; text-align: center;"><p style="font-weight: bold; margin: 0; font-size: 11px;">${tieuDeCot1}</p></td>
+                <td style="width: 33%; text-align: center;"><p style="font-weight: bold; margin: 0; font-size: 11px;">${tieuDeCot2}</p></td>
+                <td style="width: 33%; text-align: center;"><p style="font-weight: bold; margin: 0; font-size: 11px;">${tieuDeCot3}</p></td>
             </tr>
             <tr>
-                <td style="text-align: center; padding-top: 40px; font-size: 9px;"><b>${tenDayDu}</b></td>
-                <td style="text-align: center; padding-top: 40px; font-size: 9px;"><b>${nguoiKyCot2}</b></td>
-                <td style="text-align: center; padding-top: 40px; font-size: 9px;"><b>${nguoiKyCot3}</b></td>
+                <td style="text-align: center; padding-top: 70px; font-size: 11px;"><b>${tenDayDu}</b></td>
+                <td style="text-align: center; padding-top: 70px; font-size: 11px;"><b>${nguoiKyCot2}</b></td>
+                <td style="text-align: center; padding-top: 70px; font-size: 11px;"><b>${nguoiKyCot3}</b></td>
             </tr>
         </table>
         <p style="text-align: left; margin-top: 8px; font-size: 8px; color: #666; font-style: italic;"></p>`;
@@ -547,16 +549,29 @@ const PDFExporter = {
         const sv = AppState.getStudent(maSV);
         if (!sv) return;
 
-        const pdfContent = DOM.get('pdfContent');
-        if (!pdfContent) {
-            alert('Không tìm thấy nội dung để xuất PDF!');
-            return;
-        }
+        // Check validation first
+        if (!this._validateBankInfo()) return;
 
-        const canvas = await this._renderCanvas(pdfContent);
-        const pdf = this._createPDF(canvas);
-        const fileName = `GiayBaoHocPhi_${sv.maSV}_${Utils.removeVietnameseTones(sv.tenDayDu).replace(/\s/g, '_')}.pdf`;
-        pdf.save(fileName);
+        // Create a temp container off-screen with fixed width match A4 printable width
+        // This prevents the screen layout (which is narrow) from distorting the PDF generation
+        const tempContainer = document.createElement('div');
+        tempContainer.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm;';
+        document.body.appendChild(tempContainer);
+
+        try {
+            // Generate content specifically for PDF (reuses the same template)
+            tempContainer.innerHTML = this._generatePDFContent(sv);
+
+            const canvas = await this._renderCanvas(tempContainer.firstElementChild);
+            const pdf = this._createPDF(canvas);
+            const fileName = `GiayBaoHocPhi_${sv.maSV}_${Utils.removeVietnameseTones(sv.tenDayDu).replace(/\s/g, '_')}.pdf`;
+            pdf.save(fileName);
+        } catch (error) {
+            console.error('Export Error:', error);
+            alert('Có lỗi khi xuất PDF');
+        } finally {
+            document.body.removeChild(tempContainer);
+        }
     },
 
     async exportAll() {
@@ -576,16 +591,16 @@ const PDFExporter = {
         const zip = new JSZip();
         const stats = { success: 0, error: 0, current: 0 };
 
-        // Xử lý theo batch để tăng tốc độ (5 PDF cùng lúc)
-        const BATCH_SIZE = 5;
+        // Xử lý theo batch để tăng tốc độ (20 PDF cùng lúc)
+        const BATCH_SIZE = 20;
 
         for (const [lop, students] of Object.entries(studentsByClass)) {
             const folder = zip.folder(lop);
-            
+
             // Chia students thành các batch
             for (let i = 0; i < students.length; i += BATCH_SIZE) {
                 const batch = students.slice(i, i + BATCH_SIZE);
-                
+
                 // Xử lý batch song song
                 await Promise.all(batch.map(async (sv) => {
                     stats.current++;
@@ -596,11 +611,9 @@ const PDFExporter = {
                 const percent = Math.round((stats.current / totalStudents) * 100);
                 DOM.get('progressBar').style.width = percent + '%';
                 DOM.get('progressText').textContent = `${stats.current} / ${totalStudents} - Lớp ${lop}: Đang xử lý...`;
-                
-                // Nhường CPU cho browser để tránh freeze
-                if (i % (BATCH_SIZE * 2) === 0) {
-                    await new Promise(resolve => setTimeout(resolve, 0));
-                }
+
+                // Nhường CPU cho browser để tránh freeze (nhưng ít hơn)
+                await new Promise(resolve => setTimeout(resolve, 0));
             }
         }
 
@@ -636,7 +649,7 @@ const PDFExporter = {
 
     async _renderCanvas(element, isBatch = false) {
         // Giảm scale cho batch processing để tăng tốc độ
-        const scale = isBatch ? 1.2 : 2;
+        const scale = isBatch ? 1.2 : CONFIG.PDF.SCALE;
         return await html2canvas(element, {
             scale: scale,
             useCORS: true,
@@ -655,30 +668,33 @@ const PDFExporter = {
         });
     },
 
-    _createPDF(canvas, scale = 2) {
+    _createPDF(canvas, scale = CONFIG.PDF.SCALE) {
         const { jsPDF } = window.jspdf;
-       
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        
-        const pdfWidth = pdf.internal.pageSize.getWidth();  
-        const pdfHeight = pdf.internal.pageSize.getHeight(); 
-        const marginX = 5;
-        const marginY = 3;
+
+        const pdf = new jsPDF(CONFIG.PDF.ORIENTATION, 'mm', CONFIG.PDF.FORMAT);
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const marginX = CONFIG.PDF.MARGIN;
+        const marginY = CONFIG.PDF.MARGIN;
         const availableWidth = pdfWidth - (marginX * 2);
         const availableHeight = pdfHeight - (marginY * 2);
-        
+
         const imgWidth = canvas.width;
         const imgHeight = canvas.height;
-        // Tính toán dựa trên scale thực tế được sử dụng
-        const ratio = Math.min(availableWidth / (imgWidth / scale), availableHeight / (imgHeight / scale));
-        const finalWidth = (imgWidth / scale) * ratio;
-        const finalHeight = (imgHeight / scale) * ratio;
-        const imgX = (pdfWidth - finalWidth) / 2;
-        const imgY = marginY;
-        
-        const imgData = canvas.toDataURL('image/jpeg', 0.85);
-        pdf.addImage(imgData, 'JPEG', imgX, imgY, finalWidth, finalHeight);
-        
+        const pixelToMm = 25.4 / 96; // Conversion factor from pixels to mm at 96 DPI
+        const logicalWidthPx = imgWidth / scale;
+        const logicalHeightPx = imgHeight / scale;
+        const contentWidthMm = logicalWidthPx * pixelToMm;
+        const contentHeightMm = logicalHeightPx * pixelToMm;
+
+        // Scale to fit the available width (Primary Constraint for "Vừa khổ")
+        const ratio = availableWidth / contentWidthMm;
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.8);
+
+        // Align Top-Left (Margin X, Margin Y) to fill top half of page
+        pdf.addImage(imgData, 'JPEG', marginX, marginY, contentWidthMm * ratio, contentHeightMm * ratio);
         return pdf;
     },
 
@@ -686,39 +702,39 @@ const PDFExporter = {
         const bankId = DOM.getValue('bankId');
         const accountNo = DOM.getValue('accountNo');
         const accountName = DOM.getValue('accountName');
-        
+
         const hocKyNamHoc = DOM.getValue('hocKyNamHoc') || CONFIG.ACADEMIC_YEAR;
         const hocKyShort = hocKyNamHoc.replace(/Học kỳ\s*/i, 'HK').replace(/\s*-\s*Năm học\s*/i, ' ').replace(/\s*-\s*/g, ' ');
         const content = `BDU ${sv.maSV} ${Utils.removeVietnameseTones(sv.tenDayDu)} ${sv.maLop} HP ${hocKyShort}`;
         const qrUrl = BankService.generateQRUrl(bankId, accountNo, sv.tongTien, content, accountName);
 
-        return `<div class="card" style="background: white; padding: 12px; max-width: 140mm; margin: 0 auto; border-radius: 0; border: none;">${PDFTemplate.generate(sv, qrUrl)}</div>`;
+        return `<div class="card" style="background: white; padding: 8px; max-width: 200mm; margin: 0 auto; border-radius: 0; border: none;">${PDFTemplate.generate(sv, qrUrl)}</div>`;
     },
 
     async _exportStudentPDF(sv, folder, container, stats, total, lop, isBatch = false) {
         try {
             // Tạo một container riêng cho mỗi student để tránh conflict
             const tempContainer = document.createElement('div');
-            tempContainer.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 140mm;';
+            tempContainer.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm;';
             document.body.appendChild(tempContainer);
-            
+
             tempContainer.innerHTML = this._generatePDFContent(sv);
-            
-            // Scale cho batch processing (1.2) hoặc single (2)
-            const scale = isBatch ? 1.2 : 2;
+
+            // Scale cho batch processing (1.2) hoặc single (CONFIG.PDF.SCALE)
+            const scale = isBatch ? 1.2 : CONFIG.PDF.SCALE;
             const canvas = await this._renderCanvas(tempContainer.firstElementChild, isBatch);
-            
+
             // Cleanup temp container ngay sau khi render để giải phóng memory
             document.body.removeChild(tempContainer);
-            
+
             const pdf = this._createPDF(canvas, scale);
-            
+
             const pdfBlob = pdf.output('blob');
             const fileName = `GiayBaoHocPhi_${sv.maSV}_${Utils.removeVietnameseTones(sv.tenDayDu).replace(/\s/g, '_')}.pdf`;
             folder.file(fileName, pdfBlob);
-            
+
             stats.success++;
-            
+
         } catch (error) {
             console.error(`Lỗi xuất PDF cho ${sv.maSV}:`, error);
             stats.error++;
@@ -730,7 +746,7 @@ const PDFExporter = {
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(zipBlob);
-        downloadLink.download = `GiayBaoHocPhi_${new Date().toISOString().slice(0,10)}.zip`;
+        downloadLink.download = `GiayBaoHocPhi_${new Date().toISOString().slice(0, 10)}.zip`;
         downloadLink.click();
         URL.revokeObjectURL(downloadLink.href);
     },
@@ -751,9 +767,9 @@ const PDFExporter = {
 // ============================================
 const Utils = {
     formatCurrency(amount) {
-        return new Intl.NumberFormat('vi-VN', { 
-            style: 'currency', 
-            currency: 'VND' 
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
         }).format(amount);
     },
 
@@ -791,7 +807,7 @@ const AccountLookup = {
     async perform() {
         const bankId = DOM.getValue('bankId');
         const accountNo = DOM.getValue('accountNo').trim();
-        
+
         if (!bankId || accountNo.length < 6) {
             UI.updateAccountLookupStatus('', '#6b7280');
             return;
@@ -800,7 +816,7 @@ const AccountLookup = {
         UI.updateAccountLookupStatus('Đang tra cứu...', '#1a56db');
 
         const accountName = await BankService.lookupAccountName(bankId, accountNo);
-        
+
         if (accountName) {
             DOM.setValue('accountName', accountName);
             UI.updateAccountLookupStatus('✓ Đã tìm thấy tên tài khoản', '#059669');
@@ -817,7 +833,7 @@ const AccountLookup = {
             accountNoInput.addEventListener('input', () => {
                 clearTimeout(AppState.lookupTimeout);
                 const accountNo = accountNoInput.value.trim();
-                
+
                 if (accountNo.length >= 6) {
                     UI.updateAccountLookupStatus('Đang chờ tra cứu...', '#6b7280');
                     AppState.lookupTimeout = setTimeout(() => {
@@ -861,7 +877,7 @@ const DragDropHandler = {
         uploadSection.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadSection.style.background = '#e8effc';
-            
+
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 const file = files[0];
@@ -893,13 +909,13 @@ window.exportAllPDF = () => PDFExporter.exportAll();
 document.addEventListener('DOMContentLoaded', async () => {
     // Load banks list
     await BankService.loadBanksList();
-    
+
     // Setup drag & drop
     DragDropHandler.setup();
-    
+
     // Setup account lookup
     AccountLookup.setupAutoLookup();
-    
+
     // Setup search on Enter
     const searchInput = DOM.get('searchInput');
     if (searchInput) {
