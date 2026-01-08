@@ -501,7 +501,7 @@ const PDFTemplate = {
 
         html += `
                 <tr style="${sumBg}">
-                    <td colspan="5" style="${cellStyleLeft} padding: 4px; text-align: right; font-weight: bold; ${sumBg}">Tổng cộng</td>
+                    <td colspan="5" style="${cellStyleLeft} padding: 4px; text-align: center; font-weight: bold; ${sumBg}">Tổng cộng:</td>
                     <td style="${cellStyle} padding: 4px; text-align: right; font-weight: bold; ${sumBg}">${Utils.formatNumber(tongThanhTien)}</td>
                     <td style="${cellStyle} padding: 4px; text-align: right; font-weight: bold; ${sumBg}">${Utils.formatNumber(tongMienGiam)}</td>
                     <td style="${cellStyle} padding: 4px; text-align: right; font-weight: bold; ${sumBg}">${Utils.formatNumber(tongPhuThu)}</td>
