@@ -40,18 +40,18 @@ const PDFTemplate = {
 
     _renderStudentInfo(sv) {
         return `
-        <table style="width: 100%; margin-bottom: 0; margin-top: 0;">
+        <table style="width: 100%; margin-bottom: 10px; margin-top: 0;">
             <tr>
                 <td style="vertical-align: top;">
                     <table style="width: 100%; font-size: 10px; margin-top: 0;">
                         <tr>
-                            <td style="padding: 1px 0; width: 40%;">Họ và tên: <strong>${sv.tenDayDu}</strong></td>
-                            <td style="padding: 1px 0; width: 30%;">MSSV: <strong>${sv.maSV}</strong></td>
-                            <td style="padding: 1px 0; width: 30%;">Lớp: <strong>${sv.maLop}</strong></td>
+                            <td style="padding: 3px 0; width: 40%;">Họ và tên: <strong>${sv.tenDayDu}</strong></td>
+                            <td style="padding: 3px 0; width: 30%;">MSSV: <strong>${sv.maSV}</strong></td>
+                            <td style="padding: 3px 0; width: 30%;">Lớp: <strong>${sv.maLop}</strong></td>
                         </tr>
                         <tr>
-                            <td style="padding: 1px 0;">Ngành: <strong>${sv.tenNgChng || ''}</strong></td>
-                            <td style="padding: 1px 0;" colspan="2">Hệ đào tạo: <strong>${sv.tenLop || ''}</strong></td>
+                            <td style="padding: 3px 0;">Ngành: <strong>${sv.tenNgChng || ''}</strong></td>
+                            <td style="padding: 3px 0;" colspan="2">Hệ đào tạo: <strong>${sv.tenLop || ''}</strong></td>
                         </tr>
                     </table>
                 </td>

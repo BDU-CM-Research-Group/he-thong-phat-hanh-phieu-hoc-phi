@@ -95,13 +95,13 @@ const BankService = {
                 bankId = '970403';
                 shortName = 'Sacombank';
                 accountNo = '197939339';
-                accountName = 'Phân hiệu Trường đại học Bình Dương tại Cà Mau';
+                accountName = 'PHAN HIEU DAI HOC BINH DUONG';
                 break;
             case 'VCB':
                 bankId = '970436';
                 shortName = 'Vietcombank';
                 accountNo = '7372739339';
-                accountName = 'Phân hiệu Trường đại học Bình Dương tại Cà Mau';
+                accountName = 'PHAN HIEU DAI HOC BINH DUONG';
                 break;
         }
 
