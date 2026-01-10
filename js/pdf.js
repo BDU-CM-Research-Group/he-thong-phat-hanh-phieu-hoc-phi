@@ -271,7 +271,7 @@ const PDFExporter = {
                         tempContainer.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm; background: white;';
                         document.body.appendChild(tempContainer);
 
-                        tempContainer.innerHTML = this._generatePDFContent(sv);
+                        tempContainer.innerHTML = await this._generatePDFContent(sv);
 
                         const canvas = await this._renderCanvasOptimized(tempContainer.firstElementChild, SCALE);
 
@@ -492,17 +492,18 @@ const PDFExporter = {
         pdf.addImage(imgData, 'JPEG', xPosition, marginY, finalWidthMm, finalHeightMm);
     },
 
-    _generatePDFContent(sv) {
+    async _generatePDFContent(sv) {
         const bankId = DOM.getValue('bankId');
         const accountNo = DOM.getValue('accountNo');
-        const accountName = DOM.getValue('accountName');
 
         const hocKyNamHoc = DOM.getValue('hocKyNamHoc') || CONFIG.ACADEMIC_YEAR;
         const hocKyShort = hocKyNamHoc.replace(/Học kỳ\s*/i, 'HK').replace(/\s*-\s*Năm học\s*/i, ' ').replace(/\s*-\s*/g, ' ');
         const content = `BDU ${sv.maSV} ${Utils.removeVietnameseTones(sv.tenDayDu)} ${sv.maLop} HP ${hocKyShort}`;
-        const qrUrl = BankService.generateQRUrl(bankId, accountNo, sv.tongTien, content, accountName);
+        
+        // Tạo QR code với logo
+        const qrDataUrl = await QRGenerator.generateQRDataUrl(bankId, accountNo, sv.tongTien, content, 200);
 
-        return `<div class="card" style="background: white; padding: 0; max-width: 200mm; margin: 0 auto; border-radius: 0; border: none;">${PDFTemplate.generate(sv, qrUrl)}</div>`;
+        return `<div class="card" style="background: white; padding: 0; max-width: 200mm; margin: 0 auto; border-radius: 0; border: none;">${PDFTemplate.generate(sv, qrDataUrl)}</div>`;
     },
 
     async _exportStudentPDFOptimized(sv, folder, stats, total, lop, scale = 2) {
@@ -511,7 +512,7 @@ const PDFExporter = {
             tempContainer.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm; background: white;';
             document.body.appendChild(tempContainer);
 
-            tempContainer.innerHTML = this._generatePDFContent(sv);
+            tempContainer.innerHTML = await this._generatePDFContent(sv);
 
             const canvas = await this._renderCanvasOptimized(tempContainer.firstElementChild, scale);
 

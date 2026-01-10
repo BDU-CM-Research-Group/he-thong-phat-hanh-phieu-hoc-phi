@@ -4,8 +4,7 @@
 const CONFIG = {
     API: {
         VIETQR_BANKS: 'https://api.vietqr.io/v2/banks',
-        VIETQR_LOOKUP: 'https://api.vietqr.io/v2/lookup',
-        QR_IMAGE_BASE: 'https://img.vietqr.io/image'
+        VIETQR_LOOKUP: 'https://api.vietqr.io/v2/lookup'
     },
     DEFAULT_BANK: '970415', // VietinBank
     LOOKUP_DELAY: 800, // ms

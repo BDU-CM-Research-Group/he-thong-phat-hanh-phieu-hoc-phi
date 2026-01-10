@@ -77,10 +77,6 @@ const BankService = {
         return bank?.shortName || bankId;
     },
 
-    generateQRUrl(bankId, accountNo, amount, content, accountName) {
-        return `${CONFIG.API.QR_IMAGE_BASE}/${bankId}-${accountNo}-qr_only.png?amount=${amount}&addInfo=${encodeURIComponent(content)}&accountName=${encodeURIComponent(accountName)}`;
-    },
-
     quickFill(bankCode) {
         let bankId, shortName, accountNo, accountName;
 
