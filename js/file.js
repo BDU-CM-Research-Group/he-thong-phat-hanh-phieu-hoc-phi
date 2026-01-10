@@ -161,6 +161,11 @@ const FileProcessor = {
                 phaiThu = (soTC * donGia) - mienGiam + phuThu;
             }
 
+            const rawHeSoHP = findValue(row, mapping.heSoHP);
+            const heSoHP = rawHeSoHP !== undefined && rawHeSoHP !== null && rawHeSoHP !== '';
+            // Nếu cột HeSoHP có dữ liệu, thì ghi chú sẽ hiển thị "HL"
+            const ghiChu = heSoHP ? true : false;
+
             AppState.groupedStudents[maSV].monHoc.push({
                 maMH: findValue(row, mapping.maMH),
                 tenMH: findValue(row, mapping.tenMH),
@@ -171,7 +176,8 @@ const FileProcessor = {
                 mienGiam: mienGiam,
                 phuThu: phuThu,
                 phaiThu: phaiThu,
-                heSoHP: findValue(row, mapping.heSoHP)
+                heSoHP: rawHeSoHP,
+                ghiChu: ghiChu
             });
 
             AppState.groupedStudents[maSV].tongTien += phaiThu;
