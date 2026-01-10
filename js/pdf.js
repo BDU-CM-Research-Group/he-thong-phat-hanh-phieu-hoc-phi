@@ -1,4 +1,7 @@
 // ============================================
+// OPTIMIZED PDF EXPORTER FOR WINDOWS
+// ============================================
+// ============================================
 // PDF TEMPLATE
 // ============================================
 const PDFTemplate = {
@@ -60,11 +63,9 @@ const PDFTemplate = {
     },
 
     _renderTable(sv, tongMienGiam) {
-
         const borderStyle = '1px solid #333';
         const hBg = 'background-color: #dbeafe;';
         const sumBg = 'background-color: #dbeafe;';
-
 
         const cellPadding = 'padding: 5px 4px; vertical-align: middle;';
         const cellStyle = `${cellPadding} border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
@@ -78,7 +79,6 @@ const PDFTemplate = {
         const thStyleTop = `${cellPadding} border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
         const thStyleTopLeft = `${cellPadding} border-top: ${borderStyle}; border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle};`;
         const thStyleTopRight = `${cellPadding} border-top: ${borderStyle}; border-bottom: ${borderStyle};`;
-
 
         let html = `
         <table style="width: 100%; border-collapse: collapse; border-spacing: 0; font-size: 10px; margin-bottom: 0;">
@@ -106,10 +106,7 @@ const PDFTemplate = {
                     <th style="${thStyleRight} text-align: center; border-right: ${borderStyle}; ${hBg}; ">(6)</th>
                 </tr>
             </thead>
-            <tbody>
-                
-                   
-                </tr>`;
+            <tbody>`;
 
         sv.monHoc.forEach((mh, idx) => {
             const thanhTien = mh.soTC * mh.donGia;
@@ -126,7 +123,6 @@ const PDFTemplate = {
             </tr>`;
         });
 
-        // Tính tổng thành tiền và tổng phụ thu
         const tongThanhTien = sv.monHoc.reduce((sum, mh) => sum + (mh.soTC * mh.donGia), 0);
 
         html += `
@@ -155,6 +151,24 @@ const PDFTemplate = {
         const tieuDeCot3 = DOM.getValue('tieuDeCot3') || 'Người lập biểu';
         const nguoiKyCot2 = DOM.getValue('nguoiKyCot2') || 'Lê Ngọc Nữ';
         const nguoiKyCot3 = DOM.getValue('nguoiKyCot3') || 'Nguyễn Chí Thanh';
+        
+        const signatureCot2 = DOM.getValue('signatureDataCot2') || '';
+        const signatureCot3 = DOM.getValue('signatureDataCot3') || '';
+        
+        let signatureHtmlCot2 = '';
+        if (signatureCot2) {
+            signatureHtmlCot2 = `<div style="height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px;"><img src="${signatureCot2}" alt="Chữ ký" style="max-width: 190px; max-height: 80px; width: auto; height: auto; display: block; object-fit: contain;"></div>`;
+        } else {
+            signatureHtmlCot2 = `<div style="height: 60px; margin-bottom: 4px;"></div>`;
+        }
+        
+        let signatureHtmlCot3 = '';
+        if (signatureCot3) {
+            signatureHtmlCot3 = `<div style="height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px;"><img src="${signatureCot3}" alt="Chữ ký" style="max-width: 160px; max-height: 60px; width: auto; height: auto; display: block; object-fit: contain;"></div>`;
+        } else {
+            signatureHtmlCot3 = `<div style="height: 60px; margin-bottom: 4px;"></div>`;
+        }
+        
         return `
         <div style="position: relative;">
             <table style="width: 100%; font-size: 10px; margin-top: 0;">
@@ -169,9 +183,17 @@ const PDFTemplate = {
                     <td style="width: 33%; text-align: center;"><p style="font-weight: bold; margin: 0; font-size: 10px;">${tieuDeCot3}</p></td>
                 </tr>
                 <tr>
-                    <td style="text-align: center; padding-top: 60px; font-size: 10px;"><b>${tenDayDu}</b></td>
-                    <td style="text-align: center; padding-top: 60px; font-size: 10px;"><b>${nguoiKyCot2}</b></td>
-                    <td style="text-align: center; padding-top: 60px; font-size: 10px;"><b>${nguoiKyCot3}</b></td>
+                    <td style="text-align: center; padding-top: 60px; font-size: 10px; vertical-align: bottom;">
+                        <b>${tenDayDu}</b>
+                    </td>
+                    <td style="text-align: center; padding-top: 8px; font-size: 10px; vertical-align: bottom;">
+                        ${signatureHtmlCot2}
+                        <b>${nguoiKyCot2}</b>
+                    </td>
+                    <td style="text-align: center; padding-top: 8px; font-size: 10px; vertical-align: bottom;">
+                        ${signatureHtmlCot3}
+                        <b>${nguoiKyCot3}</b>
+                    </td>
                 </tr>
             </table>
             <p style="text-align: left; margin-top: 5px; margin-bottom: 0; font-size: 7px; color: #666; font-style: italic;">${printDate}</p>
@@ -180,7 +202,7 @@ const PDFTemplate = {
 };
 
 // ============================================
-// PDF EXPORTER (using html2canvas + jsPDF)
+// OPTIMIZED PDF EXPORTER FOR WINDOWS
 // ============================================
 const PDFExporter = {
     async exportSingle(maSV) {
@@ -197,8 +219,8 @@ const PDFExporter = {
             return;
         }
 
-        const canvas = await this._renderCanvas(pdfContent);
-        const pdf = this._createPDF(canvas);
+        const canvas = await this._renderCanvas(pdfContent, false, 2);
+        const pdf = this._createPDF(canvas, 2);
         const fileName = `GiayBaoHocPhi_${sv.maSV}_${Utils.removeVietnameseTones(sv.tenDayDu).replace(/\s/g, '_')}.pdf`;
         pdf.save(fileName);
     },
@@ -236,47 +258,38 @@ const PDFExporter = {
             const pdf = new jsPDF('l', 'mm', 'a5');
             const stats = { success: 0, error: 0, current: 0 };
             const totalToExport = studentsToExport.length;
-            const BATCH_SIZE = 5; // Giảm batch size vì tăng độ phân giải
+            
+            const BATCH_SIZE = 10;
+            const SCALE = 2;
 
             try {
-                // Batch processing optimization
                 for (let i = 0; i < totalToExport; i += BATCH_SIZE) {
                     const batch = studentsToExport.slice(i, i + BATCH_SIZE);
 
-                    // Render 10 canvases in parallel
-                    const canvasResults = await Promise.all(batch.map(async (sv) => {
-                        try {
-                            const tempContainer = document.createElement('div');
-                            // Fixed width 200mm for consistency
-                            tempContainer.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm; background: white;';
-                            document.body.appendChild(tempContainer);
+                    const canvasResults = await Promise.allSettled(batch.map(async (sv) => {
+                        const tempContainer = document.createElement('div');
+                        tempContainer.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm; background: white;';
+                        document.body.appendChild(tempContainer);
 
-                            tempContainer.innerHTML = this._generatePDFContent(sv);
+                        tempContainer.innerHTML = this._generatePDFContent(sv);
 
-                            // Scale 3: High resolution for sharpness (~250kb/page)
-                            const canvas = await this._renderCanvas(tempContainer.firstElementChild, true, 3);
+                        const canvas = await this._renderCanvasOptimized(tempContainer.firstElementChild, SCALE);
 
-                            document.body.removeChild(tempContainer);
-                            return { success: true, canvas: canvas, sv: sv };
-                        } catch (err) {
-                            return { success: false, error: err, sv: sv };
-                        }
+                        document.body.removeChild(tempContainer);
+                        return { canvas: canvas, sv: sv };
                     }));
 
-                    // Add to PDF sequentially to maintain order and prevent memory spikes
                     for (let j = 0; j < canvasResults.length; j++) {
                         const res = canvasResults[j];
                         stats.current++;
 
-                        if (res.success) {
-                            // Add new page if not the very first page
+                        if (res.status === 'fulfilled') {
                             if (i > 0 || j > 0) pdf.addPage();
-
-                            // Use JPEG quality 1.0 for max sharpness
-                            this._addImageToPDF(pdf, res.canvas, 3, 1.0);
+                            
+                            this._addImageToPDF(pdf, res.value.canvas, SCALE, 0.85);
                             stats.success++;
                         } else {
-                            console.error(`Lỗi xuất PDF cho ${res.sv.maSV}:`, res.error);
+                            console.error(`Lỗi xuất PDF:`, res.reason);
                             stats.error++;
                         }
                     }
@@ -285,8 +298,7 @@ const PDFExporter = {
                     DOM.get('progressBar').style.width = percent + '%';
                     DOM.get('progressText').textContent = `${stats.current} / ${totalToExport} - Đang xử lý...`;
 
-                    // Small delay to prevent browser freeze
-                    await new Promise(resolve => setTimeout(resolve, 50));
+                    await new Promise(resolve => setTimeout(resolve, 10));
                 }
 
                 const fileName = `DanhSachPhieuHocPhi_Gop_${new Date().toISOString().slice(0, 10)}.pdf`;
@@ -340,7 +352,6 @@ const PDFExporter = {
             return;
         }
 
-        // Gom nhóm theo lớp để nén ZIP
         const studentsByClass = {};
         studentsToExport.forEach(sv => {
             const lop = sv.maLop || 'KhongCoLop';
@@ -353,11 +364,11 @@ const PDFExporter = {
 
         Modal.confirm(message + `<br>Quá trình này có thể mất vài phút.`, async () => {
             this._showProgress();
-            const hiddenContainer = this._createHiddenContainer();
             const zip = new JSZip();
             const stats = { success: 0, error: 0, current: 0 };
 
-            const BATCH_SIZE = 5;
+            const BATCH_SIZE = 10;
+            const SCALE = 2;
 
             for (const [lop, students] of Object.entries(studentsByClass)) {
                 const folder = zip.folder(lop);
@@ -365,9 +376,9 @@ const PDFExporter = {
                 for (let i = 0; i < students.length; i += BATCH_SIZE) {
                     const batch = students.slice(i, i + BATCH_SIZE);
 
-                    await Promise.all(batch.map(async (sv) => {
+                    const results = await Promise.allSettled(batch.map(async (sv) => {
                         stats.current++;
-                        await this._exportStudentPDF(sv, folder, hiddenContainer, stats, totalToExport, lop, true);
+                        return await this._exportStudentPDFOptimized(sv, folder, stats, totalToExport, lop, SCALE);
                     }));
 
                     const percent = Math.round((stats.current / totalToExport) * 100);
@@ -375,13 +386,12 @@ const PDFExporter = {
                     DOM.get('progressText').textContent = `${stats.current} / ${totalToExport} - Lớp ${lop}: Đang xử lý...`;
 
                     if (i % (BATCH_SIZE * 2) === 0) {
-                        await new Promise(resolve => setTimeout(resolve, 0));
+                        await new Promise(resolve => setTimeout(resolve, 5));
                     }
                 }
             }
 
             await this._downloadZip(zip);
-            document.body.removeChild(hiddenContainer);
             this._hideProgress();
 
             Modal.show({
@@ -420,19 +430,7 @@ const PDFExporter = {
         return { accountNo, accountName, bankId };
     },
 
-    _createHiddenContainer() {
-        // Container này không còn cần thiết vì mỗi student sẽ có container riêng
-        // Nhưng giữ lại để không break code cũ
-        const container = document.createElement('div');
-        container.id = 'hiddenPdfContainer';
-        container.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm;';
-        document.body.appendChild(container);
-        return container;
-    },
-
-    async _renderCanvas(element, isBatch = false, customScale = null) {
-        // Tăng scale để ảnh nét hơn (3-4)
-        const scale = customScale ? customScale : (isBatch ? 3 : 4);
+    async _renderCanvasOptimized(element, scale = 2) {
         return await html2canvas(element, {
             scale: scale,
             useCORS: true,
@@ -440,7 +438,8 @@ const PDFExporter = {
             backgroundColor: '#ffffff',
             logging: false,
             imageTimeout: 0,
-            removeContainer: true, // Tự động dọn dẹp để giảm memory
+            removeContainer: true,
+            foreignObjectRendering: false,
             onclone: (clonedDoc) => {
                 const tables = clonedDoc.querySelectorAll('table');
                 tables.forEach(table => {
@@ -451,6 +450,11 @@ const PDFExporter = {
         });
     },
 
+    async _renderCanvas(element, isBatch = false, customScale = null) {
+        const scale = customScale ? customScale : (isBatch ? 2 : 2);
+        return await this._renderCanvasOptimized(element, scale);
+    },
+
     _createPDF(canvas, scale = 2) {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('l', 'mm', 'a5');
@@ -458,7 +462,7 @@ const PDFExporter = {
         return pdf;
     },
 
-    _addImageToPDF(pdf, canvas, scale, quality = 1.0) {
+    _addImageToPDF(pdf, canvas, scale, quality = 0.92) {
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
         const marginX = 5;
@@ -468,27 +472,23 @@ const PDFExporter = {
 
         const imgWidth = canvas.width;
         const imgHeight = canvas.height;
-        const pixelToMm = 25.4 / 96; // Conversion factor from pixels to mm at 96 DPI
+        const pixelToMm = 25.4 / 96;
         const logicalWidthPx = imgWidth / scale;
         const logicalHeightPx = imgHeight / scale;
         const contentWidthMm = logicalWidthPx * pixelToMm;
         const contentHeightMm = logicalHeightPx * pixelToMm;
 
-        // Scale to fit both width and height to prevent overflow
         const ratioWidth = availableWidth / contentWidthMm;
         const ratioHeight = availableHeight / contentHeightMm;
-        const ratio = Math.min(ratioWidth, ratioHeight); // Use the smaller ratio to fit within page
+        const ratio = Math.min(ratioWidth, ratioHeight);
 
-        // Calculate final dimensions after scaling
         const finalWidthMm = contentWidthMm * ratio;
         const finalHeightMm = contentHeightMm * ratio;
 
-        // Center the content horizontally if it's smaller than available width
         const xPosition = marginX + (availableWidth - finalWidthMm) / 2;
 
         const imgData = canvas.toDataURL('image/jpeg', quality);
 
-        // Center horizontally and align to top
         pdf.addImage(imgData, 'JPEG', xPosition, marginY, finalWidthMm, finalHeightMm);
     },
 
@@ -505,21 +505,16 @@ const PDFExporter = {
         return `<div class="card" style="background: white; padding: 0; max-width: 200mm; margin: 0 auto; border-radius: 0; border: none;">${PDFTemplate.generate(sv, qrUrl)}</div>`;
     },
 
-    async _exportStudentPDF(sv, folder, container, stats, total, lop, isBatch = false) {
+    async _exportStudentPDFOptimized(sv, folder, stats, total, lop, scale = 2) {
         try {
-            // Tạo một container riêng cho mỗi student để tránh conflict
             const tempContainer = document.createElement('div');
-            // Use 195mm to match A5 landscape width for full page content
             tempContainer.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm; background: white;';
             document.body.appendChild(tempContainer);
 
             tempContainer.innerHTML = this._generatePDFContent(sv);
 
-            // Tăng scale lên 3 (batch) hoặc 4 (single) để đảm bảo độ nét
-            const scale = isBatch ? 3 : 4;
-            const canvas = await this._renderCanvas(tempContainer.firstElementChild, isBatch);
+            const canvas = await this._renderCanvasOptimized(tempContainer.firstElementChild, scale);
 
-            // Cleanup temp container ngay sau khi render để giải phóng memory
             document.body.removeChild(tempContainer);
 
             const pdf = this._createPDF(canvas, scale);
@@ -538,7 +533,13 @@ const PDFExporter = {
 
     async _downloadZip(zip) {
         DOM.get('progressText').textContent = 'Đang nén file ZIP...';
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const zipBlob = await zip.generateAsync({ 
+            type: 'blob',
+            compression: "DEFLATE",
+            compressionOptions: {
+                level: 6
+            }
+        });
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(zipBlob);
         downloadLink.download = `GiayBaoHocPhi_${new Date().toISOString().slice(0, 10)}.zip`;

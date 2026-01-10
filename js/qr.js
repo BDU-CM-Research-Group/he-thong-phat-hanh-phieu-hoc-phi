@@ -33,9 +33,7 @@ const QRGenerator = {
                     <button class="btn btn-success" onclick="QRGenerator.download('${qrUrl}', '${maSV}')">
                         Tải mã QR
                     </button>
-                    <button class="btn btn-primary" onclick="PDFExporter.exportSingle('${maSV}')">
-                        Xuất PDF
-                    </button>
+                    
                 </div>
             </div>
         `;
