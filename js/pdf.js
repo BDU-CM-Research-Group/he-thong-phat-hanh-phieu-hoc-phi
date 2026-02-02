@@ -102,7 +102,7 @@ const PDFTemplate = {
                     <th style="${thStyle} text-align: center; ${hBg}">(2)</th>
                      <th style="${thStyle} text-align: center; ${hBg}">(3)=(1)*(2)</th>
                     <th style="${thStyle} text-align: center; ${hBg}">(4)</th>
-                    <th style="${thStyle} text-align: center; ${hBg}">(5)</th>
+                    <th style="${thStyle} text-align: center; ${hBg}">(5)=(3)-(4)</th>
                     <th style="${thStyleRight} text-align: center; border-right: ${borderStyle}; ${hBg}; ">(6)</th>
                 </tr>
             </thead>
